@@ -1,15 +1,4 @@
-.dm-step-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 32px;
-}
-
-.dm-step-title h3 {
-  margin: 0;
-}
-
-.dm-step-title > a {
+.dm-deploy-button {
   display: inline-flex;
   align-items: center;
   height: 26px;
@@ -22,7 +11,7 @@
   text-decoration: none;
 }
 
-.dm-step-title > a:hover {
+.dm-deploy-button:hover {
   border-color: var(--vp-c-brand-1);
   background: var(--vp-c-bg-soft);
 }

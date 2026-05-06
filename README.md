@@ -25,7 +25,7 @@
 
 ## 为什么是 DoneMail
 
-- **部署简单**：通过 Cloudflare Workers 关联 GitHub 部署，首次打开页面创建管理员 Key。
+- **部署简单**：点击 Deploy to Cloudflare 后按默认配置完成部署，首次打开页面创建管理员 Key。
 - **配置集中**：Cloudflare Token、账号、Worker、入口域名、分享域名和域名状态都在控制台里处理。
 - **高性能服务**：正文全文检索由 FTS 索引支撑，长正文也能保持清晰、快速的搜索体验。
 - **完整工作流**：功能完整覆盖收信、搜索、发信、附件、分享、自动化和公开 API。
@@ -35,19 +35,13 @@
 
 ## 快速部署
 
-推荐使用 Cloudflare Workers 的 GitHub 关联部署。
+点击 Deploy to Cloudflare，按页面提示完成部署。详细步骤见 [使用文档](https://sow.us.kg/deploy/one-click)。
 
 <p align="center">
   <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/lchily/done-mail">
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">
   </a>
 </p>
-
-```txt
-Build command   npm run build
-Deploy command  npm run deploy
-```
-
 ## 技术架构
 
 - **运行平台**：[Cloudflare Workers](https://workers.cloudflare.com/)

@@ -25,7 +25,7 @@
 
 ## Why DoneMail
 
-- **Simple deployment**: deploy through Cloudflare Workers GitHub integration and create the admin key on first visit.
+- **Simple deployment**: click Deploy to Cloudflare, keep the default settings, and create the admin key on first visit.
 - **Centralized configuration**: manage Cloudflare Token, account, Worker, entry domain, share domain, and domain status in the console.
 - **High-performance service**: full-text body search is backed by FTS, keeping search clear and responsive even over long messages.
 - **Complete workflow**: fully covers receiving, searching, sending, attachments, sharing, automation, and public APIs.
@@ -35,19 +35,13 @@
 
 ## Quick Deploy
 
-Use Cloudflare Workers GitHub integration.
+Click Deploy to Cloudflare and follow the prompts. See the [documentation](https://sow.us.kg/deploy/one-click) for details.
 
 <p align="center">
   <a href="https://deploy.workers.cloudflare.com/?url=https://github.com/lchily/done-mail">
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">
   </a>
 </p>
-
-```txt
-Build command   npm run build
-Deploy command  npm run deploy
-```
-
 ## Technical Architecture
 
 - **Runtime platform**: [Cloudflare Workers](https://workers.cloudflare.com/)
