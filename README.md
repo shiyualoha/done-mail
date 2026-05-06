@@ -42,6 +42,12 @@
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">
   </a>
 </p>
+
+```txt
+Build command   npm run build
+Deploy command  npm run deploy
+```
+
 ## 技术架构
 
 - **运行平台**：[Cloudflare Workers](https://workers.cloudflare.com/)

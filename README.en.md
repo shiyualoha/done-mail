@@ -42,6 +42,12 @@ Click Deploy to Cloudflare and follow the prompts. See the [documentation](https
     <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare">
   </a>
 </p>
+
+```txt
+Build command   npm run build
+Deploy command  npm run deploy
+```
+
 ## Technical Architecture
 
 - **Runtime platform**: [Cloudflare Workers](https://workers.cloudflare.com/)
