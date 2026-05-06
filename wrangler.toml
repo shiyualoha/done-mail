@@ -1,0 +1,27 @@
+name = "done-mail"
+main = "src/worker/index.ts"
+compatibility_date = "2025-06-04"
+keep_vars = true
+
+[observability]
+enabled = true
+
+[triggers]
+crons = [ "0 4 * * *" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "done-mail-d1"
+
+[[kv_namespaces]]
+binding = "KV"
+
+[[r2_buckets]]
+binding = "MAIL_BUCKET"
+bucket_name = "done-mail-r2"
+
+[assets]
+binding = "ASSETS"
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = true

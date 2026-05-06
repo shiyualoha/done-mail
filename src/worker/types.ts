@@ -1,0 +1,56 @@
+export type {
+  AppConfig,
+  BodyType,
+  CloudflareAccountInfo,
+  CloudflareConfig,
+  CloudflareInspectResult,
+  CloudflareWorkerInfo,
+  DomainBatchItem,
+  DomainBatchResult,
+  DomainRecord,
+  DomainRow,
+  EntryOriginOption,
+  ForwardAddressStatus,
+  ForwardPolicyAction,
+  HttpMethod,
+  HttpRequestPolicyAction,
+  LogRow,
+  MailDetail,
+  MailPolicy,
+  MailPolicyAttachment,
+  MailPolicyConfig,
+  MailPolicyMatchPayload,
+  MailPolicyPayload,
+  MailRow,
+  PolicyAction,
+  PolicyActionType,
+  PolicyCondition,
+  PolicyConditionField,
+  PolicyConditionMode,
+  PolicyConditionOperator,
+  PolicyKeyValue,
+  PolicyPage,
+  PublicCloudflareConfig,
+  PublicMailPolicy,
+  PublicPolicyAction,
+  PublicResendConfig,
+  PublicTelegramPolicyAction,
+  RateLimitConfig,
+  ResendConfig,
+  SendMailPayload,
+  SendSettings,
+  SentDetail,
+  SentRow,
+  SettingsState,
+  SetupResult,
+  SystemConfig,
+  TelegramPolicyAction,
+  ZoneInfo
+} from '../shared/types';
+
+export interface Env {
+  DB: D1Database;
+  KV: KVNamespace;
+  MAIL_BUCKET?: R2Bucket;
+  ASSETS: Fetcher;
+}

@@ -1,0 +1,164 @@
+.login-shell {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--dm-auth-shell-padding);
+  overflow: hidden;
+  color: var(--dm-color-text);
+  background: var(--dm-auth-shell-bg);
+  font-family:
+    "PingFang SC", "Microsoft YaHei", Inter, -apple-system, BlinkMacSystemFont,
+    "SF Pro Display", "SF Pro Text", "Segoe UI", Arial, sans-serif;
+}
+
+.login-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--dm-auth-grid-bg);
+  background-size: var(--dm-auth-grid-size);
+  mask-image: var(--dm-auth-grid-mask);
+}
+
+.login-shell::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: -1;
+  width: var(--dm-auth-figure-width);
+  height: var(--dm-auth-figure-height);
+  transform: translate(-50%, -50%);
+  background: var(--dm-auth-figure-bg);
+  border: 1px solid var(--dm-auth-figure-border);
+  border-radius: var(--dm-auth-figure-radius);
+  opacity: var(--dm-auth-figure-opacity);
+}
+
+.login-panel {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, var(--dm-auth-panel-width));
+  padding: var(--dm-auth-panel-padding);
+  background: var(--dm-auth-panel-bg);
+  border: 1px solid var(--dm-auth-panel-border);
+  border-radius: var(--dm-radius-md);
+  box-shadow: var(--dm-auth-panel-shadow);
+  backdrop-filter: var(--dm-auth-panel-filter);
+  -webkit-backdrop-filter: var(--dm-auth-panel-filter);
+}
+
+.login-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--dm-auth-panel-overlay);
+}
+
+.login-brand {
+  position: absolute;
+  left: var(--dm-auth-brand-left);
+  top: var(--dm-auth-brand-top);
+  display: flex;
+  align-items: center;
+  height: var(--dm-auth-brand-height);
+  gap: var(--dm-auth-brand-gap);
+  color: var(--dm-color-text);
+  font-size: var(--dm-auth-brand-size);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.login-brand img {
+  display: block;
+  width: var(--dm-auth-brand-logo-size);
+  height: var(--dm-auth-brand-logo-size);
+  object-fit: contain;
+}
+
+.login-panel h1 {
+  margin: 0 0 var(--dm-auth-title-bottom);
+  color: var(--dm-color-text);
+  font-size: var(--dm-auth-title-size);
+  font-weight: 760;
+  line-height: 1.2;
+}
+
+.login-form {
+  display: grid;
+  gap: var(--dm-auth-form-gap);
+}
+
+.login-form .el-form-item__label {
+  padding-bottom: var(--dm-gap-md);
+  color: var(--dm-color-text-secondary);
+  font-size: var(--dm-label-font-size);
+  font-weight: 700;
+}
+
+.login-form .el-input__wrapper {
+  min-height: var(--dm-auth-control-height);
+  background: var(--dm-auth-control-bg);
+  border-radius: var(--dm-control-radius);
+  box-shadow:
+    var(--dm-control-shadow),
+    var(--dm-auth-control-shadow);
+}
+
+.login-form .el-input__wrapper:hover {
+  background: var(--dm-auth-control-bg-hover);
+  box-shadow: var(--dm-control-shadow-hover);
+}
+
+.login-form .el-input__wrapper.is-focus {
+  background: var(--dm-auth-control-bg-focus);
+  box-shadow: var(--dm-control-shadow-focus);
+}
+
+.login-form .el-input__inner {
+  color: var(--dm-control-text);
+  font-size: var(--dm-control-font-size);
+  font-weight: 500;
+}
+
+.login-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dm-button-gap);
+  width: 100%;
+  height: var(--dm-auth-control-height);
+  color: var(--dm-color-surface);
+  background: var(--dm-auth-submit-bg);
+  border: 1px solid var(--dm-auth-submit-border);
+  border-radius: var(--dm-button-radius);
+  box-shadow: var(--dm-auth-submit-shadow);
+  font-size: var(--dm-button-font-size);
+  font-weight: 760;
+  transition:
+    transform var(--dm-transition-base),
+    box-shadow var(--dm-transition-base),
+    background-color var(--dm-transition-base),
+    border-color var(--dm-transition-base);
+}
+
+.login-submit:hover:not(:disabled) {
+  transform: var(--dm-auth-submit-transform-hover);
+  background: var(--dm-auth-submit-bg-hover);
+  border-color: var(--dm-auth-submit-border-hover);
+  box-shadow: var(--dm-auth-submit-shadow-hover);
+}
+
+.login-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--dm-auth-submit-focus);
+}

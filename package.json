@@ -1,0 +1,66 @@
+{
+  "name": "done-mail",
+  "version": "1.0.0",
+  "description": "高性能、自托管的 Cloudflare 邮箱控制台。",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lchily/done-mail.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lchily/done-mail/issues"
+  },
+  "homepage": "https://github.com/lchily/done-mail#readme",
+  "keywords": [
+    "cloudflare",
+    "cloudflare-workers",
+    "email",
+    "email-routing",
+    "self-hosted",
+    "mail",
+    "d1",
+    "kv",
+    "r2",
+    "vue"
+  ],
+  "type": "module",
+  "scripts": {
+    "local": "npm run build && wrangler dev --config wrangler.local.toml",
+    "build": "vite build",
+    "docs:dev": "vitepress dev docs --port 5277",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --port 5277",
+    "check": "npm run check:prod && npm run typecheck && npm run test && npm run build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "check:prod": "node scripts/check-production-config.mjs",
+    "deploy": "npm run check:prod && npm run build && wrangler deploy --config wrangler.toml"
+  },
+  "dependencies": {
+    "@codemirror/autocomplete": "^6.20.1",
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.41.1",
+    "@tanstack/vue-query": "^5.100.9",
+    "axios": "^1.9.0",
+    "element-plus": "^2.10.2",
+    "hono": "^4.8.2",
+    "pinia": "^3.0.4",
+    "postal-mime": "^2.4.3",
+    "squire-rte": "^2.4.3",
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vitepress": "^1.6.4",
+    "vitest": "^4.1.5",
+    "vue-tsc": "^2.2.10",
+    "wrangler": "^4.20.5"
+  }
+}

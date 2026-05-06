@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+*.tsbuildinfo
+docs/.vitepress/cache/
+
+# Test and coverage output
+coverage/
+.vitest/
+
+# Cloudflare local state and local secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Temporary files
+tmp/
+.cache/
+.temp/
+
+# Logs
+logs/
+*.log
+
+# OS and editor files
+**/.DS_Store
+.AppleDouble
+.LSOverride
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Local tool state
+.ace-tool/
+
+# Local brand source files
+assets/brand/logo-source.png
