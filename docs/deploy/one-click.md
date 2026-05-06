@@ -8,7 +8,7 @@
 
 从 DoneMail 仓库或 README 点击 <a class="dm-deploy-button" href="https://deploy.workers.cloudflare.com/?url=https://github.com/lchily/done-mail" target="_blank" rel="noreferrer">Deploy to Cloudflare</a>。
 
-> 截图占位：DoneMail README 中的 Deploy to Cloudflare 按钮。
+![README 中的 Deploy to Cloudflare 按钮](/deploy/readme-deploy-button.png)
 
 ### 2. 按页面提示完成部署
 
@@ -27,13 +27,13 @@ Build command   npm run build
 Deploy command  npm run deploy
 ```
 
-> 截图占位：Cloudflare 授权、资源创建和部署页面。
+![Cloudflare 部署配置页面](/deploy/cloudflare-deploy-config.png)
 
 ### 3. 初始化后台
 
 部署完成后打开 DoneMail 后台，首次进入时创建管理员 Key。
 
-> 截图占位：DoneMail 初始化管理员 Key 页面。
+![DoneMail 初始化管理员 Key 页面](/deploy/setup-admin-key.png)
 
 ## 后续更新
 
