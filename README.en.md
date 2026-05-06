@@ -67,6 +67,10 @@ Deploy command  npm run deploy
 
 Issues and PRs are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) before starting.
 
+## Acknowledgements
+
+Thanks to the [linux.do](https://linux.do) community for the discussions and support.
+
 ## License
 
 This project is licensed under [MIT](./LICENSE).

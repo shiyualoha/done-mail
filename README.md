@@ -67,6 +67,10 @@ Deploy command  npm run deploy
 
 欢迎提交 issue 和 PR。开始前请阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
+## 致谢
+
+感谢 [linux.do](https://linux.do) 社区的交流与支持。
+
 ## License
 
 本项目采用 [MIT](./LICENSE) 许可证。
