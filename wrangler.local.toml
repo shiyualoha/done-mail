@@ -16,9 +16,9 @@ database_name = "done-mail-local-d1"
 [[kv_namespaces]]
 binding = "KV"
 
-[[r2_buckets]]
-binding = "MAIL_BUCKET"
-bucket_name = "done-mail-local-r2"
+# [[r2_buckets]]
+# binding = "MAIL_BUCKET"
+# bucket_name = "done-mail-local-r2"
 
 [assets]
 binding = "ASSETS"

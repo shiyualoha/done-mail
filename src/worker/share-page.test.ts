@@ -138,15 +138,11 @@ describe('share page', () => {
     expect(html).not.toContain('img[src^=&quot;https://&quot;]');
   });
 
-  it('分享附件下载也不允许缓存', async () => {
+  it('分享附件下载返回 404（已注释 R2）', async () => {
     const env = createEnv();
     const share = await createMailShare(env, 'mail_1');
     const response = await downloadShareAttachment(env, share.token, 'att_1');
 
-    expect(response.status).toBe(200);
-    expect(response.headers.get('Cache-Control')).toBe('no-store');
-    expect(response.headers.get('Referrer-Policy')).toBe('no-referrer');
-    expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
-    expect(response.headers.get('Content-Type')).toBe('application/pdf');
+    expect(response.status).toBe(404);
   });
 });

@@ -1,17 +1,17 @@
 import PostalMime from 'postal-mime';
 import { getSystemConfig } from './config';
-import { fileContentDisposition } from './http/content-disposition';
+// import { fileContentDisposition } from './http/content-disposition'; // 已注释：不启用 R2
 import { buildBodyPreview, buildMailBodyChunks, buildMailContentSearchChunks, buildMailSearchFields } from './mail-content';
 import { createMailShare, deleteMailShares } from './mail-share';
 import { runMailPolicies } from './policies';
-import { deleteR2Objects, deleteR2ObjectsBestEffort } from './r2';
+// import { deleteR2Objects, deleteR2ObjectsBestEffort } from './r2'; // 已注释：不启用 R2
 import { deleteSentMails } from './sent-mails';
 import type { Env, MailPolicyMatchPayload, MailPolicyPayload } from './types';
 import { createId, extractDomain, nowIso, pickEmailAddress } from './utils';
 
 const MAX_RAW_MAIL_BYTES = 10 * 1024 * 1024;
 const CLEANUP_BATCH_SIZE = 100;
-const R2_ATTACHMENT_CONCURRENCY = 3;
+// const R2_ATTACHMENT_CONCURRENCY = 3; // 已注释：不启用 R2
 const FORWARD_EVIDENCE_HEADER_KEYS = [
   'x-forwarded-to',
   'x-forwarded-for',
@@ -214,16 +214,16 @@ function attachmentSize(attachment: Record<string, unknown>) {
   return Number(attachment.size || content?.byteLength || content?.length || 0);
 }
 
-function attachmentObjectKey(mailId: string, attachmentId: string, filename: string) {
-  const cleanName = filename.trim().replace(/[^\w.\-]+/g, '_').slice(0, 120) || 'attachment';
-  return `attachments/${mailId}/${attachmentId}-${cleanName}`;
-}
+// function attachmentObjectKey(mailId: string, attachmentId: string, filename: string) { // 已注释：不启用 R2
+//   const cleanName = filename.trim().replace(/[^\w.\-]+/g, '_').slice(0, 120) || 'attachment';
+//   return `attachments/${mailId}/${attachmentId}-${cleanName}`;
+// }
 
-function attachmentRows(mailId: string, attachments: Array<Record<string, unknown>> = [], bucket?: R2Bucket): AttachmentRow[] {
+function attachmentRows(mailId: string, attachments: Array<Record<string, unknown>> = []): AttachmentRow[] {
   return attachments.map((attachment) => {
     const id = createId('att');
     const filename = String(attachment.filename || '');
-    const objectKey = bucket ? attachmentObjectKey(mailId, id, filename) : '';
+    const objectKey = '';
     return {
       id,
       mailId,
@@ -232,39 +232,40 @@ function attachmentRows(mailId: string, attachments: Array<Record<string, unknow
       size: attachmentSize(attachment),
       contentId: String(attachment.contentId || ''),
       disposition: String(attachment.disposition || ''),
-      stored: bucket ? 1 : 0,
+      stored: 0,
       objectKey
     };
   });
 }
 
-async function storeAttachmentObjects(bucket: R2Bucket, attachments: Array<Record<string, unknown>>, rows: AttachmentRow[]) {
-  const storedKeys: string[] = [];
-  let nextIndex = 0;
-  try {
-    async function worker() {
-      for (;;) {
-        const index = nextIndex;
-        nextIndex += 1;
-        const content = attachments[index]?.content;
-        const row = rows[index];
-        if (!row) return;
-        if (!row.objectKey || !content) continue;
-        await bucket.put(row.objectKey, content as ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob, {
-          httpMetadata: {
-            contentType: row.mimeType || 'application/octet-stream',
-            contentDisposition: fileContentDisposition(row.filename || 'attachment', row.contentId ? 'inline' : 'attachment')
-          }
-        });
-        storedKeys.push(row.objectKey);
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(R2_ATTACHMENT_CONCURRENCY, rows.length) }, () => worker()));
-  } catch (error) {
-    await deleteR2ObjectsBestEffort(bucket, storedKeys);
-    throw error;
-  }
-}
+// 已注释：不启用 R2 附件存储
+// async function storeAttachmentObjects(bucket: R2Bucket, attachments: Array<Record<string, unknown>>, rows: AttachmentRow[]) {
+//   const storedKeys: string[] = [];
+//   let nextIndex = 0;
+//   try {
+//     async function worker() {
+//       for (;;) {
+//         const index = nextIndex;
+//         nextIndex += 1;
+//         const content = attachments[index]?.content;
+//         const row = rows[index];
+//         if (!row) return;
+//         if (!row.objectKey || !content) continue;
+//         await bucket.put(row.objectKey, content as ReadableStream | ArrayBuffer | ArrayBufferView | string | Blob, {
+//           httpMetadata: {
+//             contentType: row.mimeType || 'application/octet-stream',
+//             contentDisposition: fileContentDisposition(row.filename || 'attachment', row.contentId ? 'inline' : 'attachment')
+//           }
+//         });
+//         storedKeys.push(row.objectKey);
+//       }
+//     }
+//     await Promise.all(Array.from({ length: Math.min(R2_ATTACHMENT_CONCURRENCY, rows.length) }, () => worker()));
+//   } catch (error) {
+//     await deleteR2ObjectsBestEffort(bucket, storedKeys);
+//     throw error;
+//   }
+// }
 
 function senderDisplay(name: string, address: string) {
   return name ? `${name} <${address}>` : address;
@@ -505,7 +506,7 @@ export async function handleIncomingEmail(message: ForwardableEmailMessage, env:
     const receivedAt = nowIso();
     const mailId = createId('mail');
     const attachments = (parsed.attachments || []) as Array<Record<string, unknown>>;
-    const attachmentData = attachmentRows(mailId, attachments, env.MAIL_BUCKET);
+    const attachmentData = attachmentRows(mailId, attachments);
     const preview = buildBodyPreview(parsed.text || '', parsed.html || '');
     const bodyChunks = buildMailBodyChunks(parsed.text || '', parsed.html || '');
     const contentSearchChunks = buildMailContentSearchChunks(parsed.text || '', parsed.html || '');
@@ -519,9 +520,10 @@ export async function handleIncomingEmail(message: ForwardableEmailMessage, env:
       html: parsed.html || ''
     });
 
-    if (env.MAIL_BUCKET && attachments.length > 0) {
-      await storeAttachmentObjects(env.MAIL_BUCKET, attachments, attachmentData);
-    }
+    // 已注释：不启用 R2 附件存储
+    // if (env.MAIL_BUCKET && attachments.length > 0) {
+    //   await storeAttachmentObjects(env.MAIL_BUCKET, attachments, attachmentData);
+    // }
 
     const statements = [
       env.DB.prepare(`INSERT INTO mails_fts (mail_id, subject, addresses) VALUES (?, ?, ?)`).bind(mailId, searchFields.subject, searchFields.addresses),
@@ -581,7 +583,8 @@ export async function handleIncomingEmail(message: ForwardableEmailMessage, env:
     try {
       await env.DB.batch(statements);
     } catch (error) {
-      await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, attachmentData.map((item) => item.objectKey).filter(Boolean));
+      // 已注释：不启用 R2 附件存储
+      // await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, attachmentData.map((item) => item.objectKey).filter(Boolean));
       throw error;
     }
 
@@ -630,15 +633,15 @@ export async function deleteMails(env: Env, ids: string[]) {
   if (uniqueIds.length === 0) return 0;
 
   const placeholders = uniqueIds.map(() => '?').join(', ');
-  const attachments = await env.DB.prepare(
-    `SELECT object_key AS objectKey
-     FROM mail_attachments
-     WHERE mail_id IN (${placeholders}) AND stored = 1 AND object_key <> ''`
-  )
-    .bind(...uniqueIds)
-    .all<{ objectKey: string }>();
-
-  await deleteR2Objects(env.MAIL_BUCKET, (attachments.results || []).map((item) => item.objectKey));
+  // 已注释：不启用 R2，直接删除数据库记录
+  // const attachments = await env.DB.prepare(
+  //   `SELECT object_key AS objectKey
+  //    FROM mail_attachments
+  //    WHERE mail_id IN (${placeholders}) AND stored = 1 AND object_key <> ''`
+  // )
+  //   .bind(...uniqueIds)
+  //   .all<{ objectKey: string }>();
+  // await deleteR2Objects(env.MAIL_BUCKET, (attachments.results || []).map((item) => item.objectKey));
 
   const result = await env.DB.batch([
     env.DB.prepare(`DELETE FROM mails_fts WHERE mail_id IN (${placeholders})`).bind(...uniqueIds),

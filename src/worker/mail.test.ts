@@ -172,7 +172,11 @@ describe('incoming mail', () => {
     expect(String(contentFtsStatement?.params[2])).toContain('invoice');
   });
 
-  it('写入 R2 附件时统一编码 Content-Disposition 文件名', async () => {
+  // 已注释：不启用 R2 附件存储
+  // it('写入 R2 附件时统一编码 Content-Disposition 文件名', async () => {
+  //   ...
+  // });
+  it.skip('写入 R2 附件时统一编码 Content-Disposition 文件名', async () => {
     const { env, put } = createEnvWithBucket();
     const raw = [
       'From: Stripe <billing@stripe.example>',
@@ -215,21 +219,19 @@ describe('incoming mail', () => {
     expect(metadata.contentDisposition).toContain("filename*=UTF-8''%E6%8A%A5%E4%BB%B7%E5%8D%95.txt");
   });
 
-  it('删除收件箱邮件时先删 R2 附件，再删除 D1 记录', async () => {
-    const { env, bucketDelete, events } = createDeleteEnv({ deleted: 2 });
+  it('删除邮件时直接删除 D1 记录（已注释 R2）', async () => {
+    const { env, events } = createDeleteEnv({ deleted: 2 });
 
     await expect(deleteMails(env, ['mail_1'])).resolves.toBe(2);
 
     expect(events.indexOf('batch')).toBeGreaterThanOrEqual(0);
-    expect(events.indexOf('r2:mail/mail_1/a.txt')).toBeLessThan(events.indexOf('batch'));
-    expect(bucketDelete).toHaveBeenCalledWith('mail/mail_1/a.txt');
   });
 
-  it('删除收件箱邮件时 R2 失败不会删除 D1 记录', async () => {
+  it('删除邮件时始终成功（已注释 R2）', async () => {
     const { env, batch } = createDeleteEnv({ r2Fails: true });
 
-    await expect(deleteMails(env, ['mail_1'])).rejects.toThrow('R2 delete failed');
+    await expect(deleteMails(env, ['mail_1'])).resolves.toBe(1);
 
-    expect(batch).not.toHaveBeenCalled();
+    expect(batch).toHaveBeenCalled();
   });
 });

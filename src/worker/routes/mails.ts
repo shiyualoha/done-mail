@@ -2,7 +2,7 @@ import { Hono, type Context } from 'hono';
 import { buildFtsTerms } from '../mail-content';
 import { listMailBodies } from '../mail-bodies';
 import { deleteMails } from '../mail';
-import { getMailAttachmentResponse } from '../mail-attachments';
+// import { getMailAttachmentResponse } from '../mail-attachments'; // 已注释：不启用 R2
 import { createMailShare, getMailDetailView } from '../mail-share';
 import { publicFail, publicOk } from '../http/public-response';
 import { encodeCursor, mailPageSize, maxBatchDeleteSize, normalizeSearchKeyword, pageSize, parseBatchIds, parseCursor } from '../http/query';
@@ -370,13 +370,17 @@ async function getMailDetail(c: AppContext) {
 }
 
 async function downloadMailAttachment(c: AppContext) {
-  if (!c.env.MAIL_BUCKET) return jsonFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
-  return (await getMailAttachmentResponse(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '', c.env.MAIL_BUCKET)) || jsonFail(c, '附件不存在或未保存内容', 404, 'attachment_not_found');
+  // 已注释：不启用 R2 附件存储
+  // if (!c.env.MAIL_BUCKET) return jsonFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
+  // return (await getMailAttachmentResponse(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '', c.env.MAIL_BUCKET)) || jsonFail(c, '附件不存在或未保存内容', 404, 'attachment_not_found');
+  return jsonFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
 }
 
 async function downloadPublicMailAttachment(c: AppContext) {
-  if (!c.env.MAIL_BUCKET) return publicFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
-  return (await getMailAttachmentResponse(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '', c.env.MAIL_BUCKET)) || publicFail(c, '附件不存在或未保存内容', 404, 'attachment_not_found');
+  // 已注释：不启用 R2 附件存储
+  // if (!c.env.MAIL_BUCKET) return publicFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
+  // return (await getMailAttachmentResponse(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '', c.env.MAIL_BUCKET)) || publicFail(c, '附件不存在或未保存内容', 404, 'attachment_not_found');
+  return publicFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
 }
 
 async function createShare(c: AppContext) {

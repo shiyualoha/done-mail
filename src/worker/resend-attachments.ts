@@ -1,6 +1,6 @@
 import type { Env } from './types';
-import { attachmentContentDisposition } from './http/content-disposition';
-import { deleteR2ObjectsBestEffort } from './r2';
+// import { attachmentContentDisposition } from './http/content-disposition'; // 已注释：不启用 R2
+// import { deleteR2ObjectsBestEffort } from './r2'; // 已注释：不启用 R2
 import type { PreparedAttachment, SendAttachmentInput } from './resend-types';
 import { createId } from './utils';
 
@@ -9,7 +9,7 @@ export const MAX_ATTACHMENT_TOTAL_BYTES = 20 * 1024 * 1024;
 export const MAX_RESEND_TOTAL_BYTES = 40 * 1024 * 1024;
 
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
-const R2_ATTACHMENT_CONCURRENCY = 3;
+// const R2_ATTACHMENT_CONCURRENCY = 3; // 已注释：不启用 R2
 
 const blockedAttachmentExts = new Set([
   'ade', 'adp', 'app', 'asp', 'bas', 'bat', 'cer', 'chm', 'cmd', 'com', 'cpl', 'crt', 'csh', 'der', 'exe', 'fxp',
@@ -30,15 +30,15 @@ function attachmentObjectKey(sentMailId: string, attachmentId: string, filename:
   return `sent-attachments/${sentMailId}/${attachmentId}-${cleanName}`;
 }
 
-function base64Bytes(value: string) {
-  const clean = value.includes(',') ? value.slice(value.indexOf(',') + 1) : value;
-  const binary = atob(clean);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
-}
+// function base64Bytes(value: string) { // 已注释：不启用 R2
+//   const clean = value.includes(',') ? value.slice(value.indexOf(',') + 1) : value;
+//   const binary = atob(clean);
+//   const bytes = new Uint8Array(binary.length);
+//   for (let index = 0; index < binary.length; index += 1) {
+//     bytes[index] = binary.charCodeAt(index);
+//   }
+//   return bytes;
+// }
 
 function base64ByteLength(value: string) {
   const clean = value.includes(',') ? value.slice(value.indexOf(',') + 1) : value;
@@ -72,33 +72,37 @@ export function normalizeAttachment(item: SendAttachmentInput, sentMailId: strin
   };
 }
 
-export async function storeSentAttachments(env: Env, attachments: PreparedAttachment[]) {
-  const bucket = env.MAIL_BUCKET;
-  if (!bucket || attachments.length === 0) return [];
-
-  const storedKeys: string[] = [];
-  let nextIndex = 0;
-  try {
-    const mailBucket = bucket;
-    async function worker() {
-      for (;;) {
-        const index = nextIndex;
-        nextIndex += 1;
-        const attachment = attachments[index];
-        if (!attachment) return;
-        await mailBucket.put(attachment.objectKey, base64Bytes(attachment.content), {
-          httpMetadata: {
-            contentType: attachment.mimeType,
-            contentDisposition: attachmentContentDisposition(attachment.filename)
-          }
-        });
-        storedKeys.push(attachment.objectKey);
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(R2_ATTACHMENT_CONCURRENCY, attachments.length) }, () => worker()));
-    return storedKeys;
-  } catch (error) {
-    await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, storedKeys);
-    throw error;
-  }
+// 已注释：不启用 R2 附件存储
+// export async function storeSentAttachments(env: Env, attachments: PreparedAttachment[]) {
+//   const bucket = env.MAIL_BUCKET;
+//   if (!bucket || attachments.length === 0) return [];
+//
+//   const storedKeys: string[] = [];
+//   let nextIndex = 0;
+//   try {
+//     const mailBucket = bucket;
+//     async function worker() {
+//       for (;;) {
+//         const index = nextIndex;
+//         nextIndex += 1;
+//         const attachment = attachments[index];
+//         if (!attachment) return;
+//         await mailBucket.put(attachment.objectKey, base64Bytes(attachment.content), {
+//           httpMetadata: {
+//             contentType: attachment.mimeType,
+//             contentDisposition: attachmentContentDisposition(attachment.filename)
+//           }
+//         });
+//         storedKeys.push(attachment.objectKey);
+//       }
+//     }
+//     await Promise.all(Array.from({ length: Math.min(R2_ATTACHMENT_CONCURRENCY, attachments.length) }, () => worker()));
+//     return storedKeys;
+//   } catch (error) {
+//     await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, storedKeys);
+//     throw error;
+//   }
+// }
+export async function storeSentAttachments(_env: Env, _attachments: PreparedAttachment[]) {
+  return [] as string[];
 }

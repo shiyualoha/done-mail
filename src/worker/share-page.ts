@@ -1,4 +1,4 @@
-import { getMailAttachmentResponse } from './mail-attachments';
+// import { getMailAttachmentResponse } from './mail-attachments'; // 已注释：不启用 R2
 import { getSharedMailDetail, readMailShare, type MailAttachmentView } from './mail-share';
 import type { Env } from './types';
 
@@ -191,9 +191,11 @@ export async function renderSharePage(env: Env, token: string, allowRemoteImages
 }
 
 async function getSharedAttachmentResponse(env: Env, token: string, attachmentId: string) {
-  const share = await readMailShare(env, token);
-  if (!share || !env.MAIL_BUCKET) return null;
-  return getMailAttachmentResponse(env, share.mailId, attachmentId, env.MAIL_BUCKET);
+  // 已注释：不启用 R2 附件存储
+  // const share = await readMailShare(env, token);
+  // if (!share || !env.MAIL_BUCKET) return null;
+  // return getMailAttachmentResponse(env, share.mailId, attachmentId, env.MAIL_BUCKET);
+  return null;
 }
 
 export async function downloadShareAttachment(env: Env, token: string, attachmentId: string) {

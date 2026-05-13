@@ -2,13 +2,12 @@ import { getResendConfig } from './config';
 import type { Env } from './types';
 import { createId, extractDomain, nowIso } from './utils';
 import { callResend, validateResendApiKey } from './resend-api';
-import { deleteR2ObjectsBestEffort } from './r2';
+// import { deleteR2ObjectsBestEffort } from './r2'; // 已注释：不启用 R2
 import {
   MAX_ATTACHMENT_TOTAL_BYTES,
   MAX_RESEND_TOTAL_BYTES,
   MAX_SEND_ATTACHMENTS,
-  normalizeAttachment,
-  storeSentAttachments
+  normalizeAttachment
 } from './resend-attachments';
 import type { SendMailInput } from './resend-types';
 import {
@@ -17,7 +16,6 @@ import {
   getSentMailDetail,
   insertPendingSentMail,
   listSentMails,
-  markSentAttachmentsStored,
   markSentMailStatus,
   sentMailPageSize
 } from './sent-mails';
@@ -126,17 +124,17 @@ export async function sendMailWithResend(env: Env, input: SendMailInput) {
   await insertPendingSentMail(env, { id: sentMailId, from, fromName, to, toName, subject, text, html, headers, attachments, storedKeys: [], sentAt });
 
   let resendId = '';
-  let storedKeys: string[] = [];
   try {
     const resendResponse = await callResend(config.apiKey, resendPayload);
     resendId = String(resendResponse.id || '');
-    try {
-      storedKeys = await storeSentAttachments(env, attachments);
-      await markSentAttachmentsStored(env, attachments, storedKeys);
-    } catch (error) {
-      await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, storedKeys);
-      console.error('Store sent attachments failed', error);
-    }
+    // 已注释：不启用 R2 附件存储
+    // try {
+    //   storedKeys = await storeSentAttachments(env, attachments);
+    //   await markSentAttachmentsStored(env, attachments, storedKeys);
+    // } catch (error) {
+    //   await deleteR2ObjectsBestEffort(env.MAIL_BUCKET, storedKeys);
+    //   console.error('Store sent attachments failed', error);
+    // }
     await markSentMailStatus(env, sentMailId, 'sent', resendId, '', resendResponse);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -148,6 +146,6 @@ export async function sendMailWithResend(env: Env, input: SendMailInput) {
     id: sentMailId,
     resendId,
     sentAt,
-    storedAttachments: env.MAIL_BUCKET ? attachments.length : 0
+    storedAttachments: 0
   };
 }

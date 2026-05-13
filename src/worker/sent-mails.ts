@@ -1,6 +1,6 @@
 import { buildBodyPreview, buildFtsQuery, buildMailSearchText } from './mail-content';
 import { encodeSentCursor, normalizeSearchKeyword, parseSentCursor, pageSize } from './http/query';
-import { deleteR2Objects } from './r2';
+// import { deleteR2Objects } from './r2'; // 已注释：不启用 R2
 import type { Env } from './types';
 import type { InsertPendingSentMailInput, PreparedAttachment } from './resend-types';
 import { safeJsonParse } from './utils';
@@ -204,44 +204,48 @@ export async function getSentMailDetail(env: Env, id: string) {
   };
 }
 
-export async function getSentAttachmentObject(env: Env, sentMailId: string, attachmentId: string) {
-  if (!env.MAIL_BUCKET) {
-    throw new Error('未启用附件保存');
-  }
-
-  const row = await env.DB.prepare(
-    `SELECT filename, mime_type AS mimeType, object_key AS objectKey
-     FROM sent_mail_attachments
-     WHERE id = ? AND sent_mail_id = ? AND stored = 1 AND object_key <> ''`
-  )
-    .bind(attachmentId, sentMailId)
-    .first<Record<string, unknown>>();
-
-  if (!row) return null;
-
-  const object = await env.MAIL_BUCKET.get(String(row.objectKey || ''));
-  if (!object) return null;
-
-  return {
-    object,
-    filename: String(row.filename || 'attachment'),
-    mimeType: String(row.mimeType || 'application/octet-stream')
-  };
+// 已注释：不启用 R2 附件存储
+// export async function getSentAttachmentObject(env: Env, sentMailId: string, attachmentId: string) {
+//   if (!env.MAIL_BUCKET) {
+//     throw new Error('未启用附件保存');
+//   }
+//
+//   const row = await env.DB.prepare(
+//     `SELECT filename, mime_type AS mimeType, object_key AS objectKey
+//      FROM sent_mail_attachments
+//      WHERE id = ? AND sent_mail_id = ? AND stored = 1 AND object_key <> ''`
+//   )
+//     .bind(attachmentId, sentMailId)
+//     .first<Record<string, unknown>>();
+//
+//   if (!row) return null;
+//
+//   const object = await env.MAIL_BUCKET.get(String(row.objectKey || ''));
+//   if (!object) return null;
+//
+//   return {
+//     object,
+//     filename: String(row.filename || 'attachment'),
+//     mimeType: String(row.mimeType || 'application/octet-stream')
+//   };
+// }
+export async function getSentAttachmentObject(_env: Env, _sentMailId: string, _attachmentId: string) {
+  throw new Error('未启用附件保存');
 }
 
 export async function deleteSentMails(env: Env, ids: string[]) {
   const uniqueIds = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
   if (uniqueIds.length === 0) return 0;
   const placeholders = uniqueIds.map(() => '?').join(', ');
-  const attachments = await env.DB.prepare(
-    `SELECT object_key AS objectKey
-     FROM sent_mail_attachments
-     WHERE sent_mail_id IN (${placeholders}) AND stored = 1 AND object_key <> ''`
-  )
-    .bind(...uniqueIds)
-    .all<{ objectKey: string }>();
-
-  await deleteR2Objects(env.MAIL_BUCKET, (attachments.results || []).map((item) => item.objectKey));
+  // 已注释：不启用 R2，直接删除数据库记录
+  // const attachments = await env.DB.prepare(
+  //   `SELECT object_key AS objectKey
+  //    FROM sent_mail_attachments
+  //    WHERE sent_mail_id IN (${placeholders}) AND stored = 1 AND object_key <> ''`
+  // )
+  //   .bind(...uniqueIds)
+  //   .all<{ objectKey: string }>();
+  // await deleteR2Objects(env.MAIL_BUCKET, (attachments.results || []).map((item) => item.objectKey));
 
   const result = await env.DB.batch([
     env.DB.prepare(`DELETE FROM sent_mails_fts WHERE sent_mail_id IN (${placeholders})`).bind(...uniqueIds),

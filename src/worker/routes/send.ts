@@ -1,10 +1,10 @@
 import { Hono, type Context } from 'hono';
-import { attachmentDownloadResponse } from '../http/attachments';
+// import { attachmentDownloadResponse } from '../http/attachments'; // 已注释：不启用 R2
 import { publicFail, publicOk } from '../http/public-response';
 import { sanitizeMailHtml } from '../mail-content';
 import {
   deleteSentMails,
-  getSentAttachmentObject,
+  // getSentAttachmentObject, // 已注释：不启用 R2
   getSentMailDetail,
   listSentMails,
   sendMailWithResend,
@@ -63,13 +63,15 @@ async function getSent(c: AppContext) {
 }
 
 async function downloadSentAttachment(c: AppContext) {
-  try {
-    const attachment = await getSentAttachmentObject(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '');
-    if (!attachment) return jsonFail(c, '附件不存在或未保存内容', 404, 'sent_attachment_not_found');
-    return attachmentDownloadResponse(attachment.object, attachment.filename, attachment.mimeType);
-  } catch (error) {
-    return jsonFail(c, error instanceof Error ? error.message : '附件下载失败', 404, 'sent_attachment_download_failed');
-  }
+  // 已注释：不启用 R2 附件存储
+  // try {
+  //   const attachment = await getSentAttachmentObject(c.env, c.req.param('id') || '', c.req.param('attachmentId') || '');
+  //   if (!attachment) return jsonFail(c, '附件不存在或未保存内容', 404, 'sent_attachment_not_found');
+  //   return attachmentDownloadResponse(attachment.object, attachment.filename, attachment.mimeType);
+  // } catch (error) {
+  //   return jsonFail(c, error instanceof Error ? error.message : '附件下载失败', 404, 'sent_attachment_download_failed');
+  // }
+  return jsonFail(c, '未启用附件保存', 404, 'attachment_storage_disabled');
 }
 
 sendRoutes.post('/send', sendMail);

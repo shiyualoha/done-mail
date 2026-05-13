@@ -51,6 +51,6 @@ export type {
 export interface Env {
   DB: D1Database;
   KV: KVNamespace;
-  MAIL_BUCKET?: R2Bucket;
+  // MAIL_BUCKET?: R2Bucket; // 已注释：不启用 R2 附件存储
   ASSETS: Fetcher;
 }

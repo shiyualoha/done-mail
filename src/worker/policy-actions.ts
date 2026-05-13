@@ -169,55 +169,56 @@ async function sendTelegramMessage(action: TelegramPolicyAction, message: string
   );
 }
 
-async function telegramAttachmentRows(env: Env, mailId: string) {
-  const rows = await env.DB.prepare(
-    `SELECT id, filename, mime_type AS mimeType, size, object_key AS objectKey
-     FROM mail_attachments
-     WHERE mail_id = ? AND stored = 1 AND object_key <> ''
-     ORDER BY created_at ASC, id ASC`
-  )
-    .bind(mailId)
-    .all<Record<string, unknown>>();
-  return (rows.results || []).map((row) => ({
-    id: String(row.id || ''),
-    filename: String(row.filename || 'attachment'),
-    mimeType: String(row.mimeType || 'application/octet-stream'),
-    size: Number(row.size || 0),
-    objectKey: String(row.objectKey || '')
-  }));
-}
-
-async function sendTelegramDocument(action: TelegramPolicyAction, chatId: string, file: File) {
-  const form = new FormData();
-  form.set('chat_id', chatId);
-  form.set('document', file);
-  await telegramRequest(action.botToken, 'sendDocument', form);
-}
-
-async function sendTelegramAttachments(env: Env, action: TelegramPolicyAction, payload: MailPolicyPayload) {
-  if (!env.MAIL_BUCKET || !payload.hasAttachments) return { sent: 0, skipped: 0 };
-  let sent = 0;
-  const rows = await telegramAttachmentRows(env, payload.id);
-  let skipped = Math.max(rows.length - MAX_TELEGRAM_ATTACHMENTS, 0);
-  const attachments = rows.slice(0, MAX_TELEGRAM_ATTACHMENTS).filter((attachment) => {
-    const ok = attachment.objectKey && attachment.size <= TELEGRAM_MAX_FILE_SIZE;
-    if (!ok) skipped += 1;
-    return ok;
-  });
-
-  for (const attachment of attachments) {
-    const object = await env.MAIL_BUCKET.get(attachment.objectKey);
-    if (!object) {
-      skipped += 1;
-      continue;
-    }
-    const file = new File([await object.arrayBuffer()], attachment.filename || 'attachment', { type: attachment.mimeType || 'application/octet-stream' });
-    await Promise.all(action.chatIds.map((chatId) => sendTelegramDocument(action, chatId, file)));
-    sent += 1;
-  }
-
-  return { sent, skipped };
-}
+// 已注释：不启用 R2 附件存储
+// async function telegramAttachmentRows(env: Env, mailId: string) {
+//   const rows = await env.DB.prepare(
+//     `SELECT id, filename, mime_type AS mimeType, size, object_key AS objectKey
+//      FROM mail_attachments
+//      WHERE mail_id = ? AND stored = 1 AND object_key <> ''
+//      ORDER BY created_at ASC, id ASC`
+//   )
+//     .bind(mailId)
+//     .all<Record<string, unknown>>();
+//   return (rows.results || []).map((row) => ({
+//     id: String(row.id || ''),
+//     filename: String(row.filename || 'attachment'),
+//     mimeType: String(row.mimeType || 'application/octet-stream'),
+//     size: Number(row.size || 0),
+//     objectKey: String(row.objectKey || '')
+//   }));
+// }
+//
+// async function sendTelegramDocument(action: TelegramPolicyAction, chatId: string, file: File) {
+//   const form = new FormData();
+//   form.set('chat_id', chatId);
+//   form.set('document', file);
+//   await telegramRequest(action.botToken, 'sendDocument', form);
+// }
+//
+// async function sendTelegramAttachments(env: Env, action: TelegramPolicyAction, payload: MailPolicyPayload) {
+//   if (!env.MAIL_BUCKET || !payload.hasAttachments) return { sent: 0, skipped: 0 };
+//   let sent = 0;
+//   const rows = await telegramAttachmentRows(env, payload.id);
+//   let skipped = Math.max(rows.length - MAX_TELEGRAM_ATTACHMENTS, 0);
+//   const attachments = rows.slice(0, MAX_TELEGRAM_ATTACHMENTS).filter((attachment) => {
+//     const ok = attachment.objectKey && attachment.size <= TELEGRAM_MAX_FILE_SIZE;
+//     if (!ok) skipped += 1;
+//     return ok;
+//   });
+//
+//   for (const attachment of attachments) {
+//     const object = await env.MAIL_BUCKET.get(attachment.objectKey);
+//     if (!object) {
+//       skipped += 1;
+//       continue;
+//     }
+//     const file = new File([await object.arrayBuffer()], attachment.filename || 'attachment', { type: attachment.mimeType || 'application/octet-stream' });
+//     await Promise.all(action.chatIds.map((chatId) => sendTelegramDocument(action, chatId, file)));
+//     sent += 1;
+//   }
+//
+//   return { sent, skipped };
+// }
 
 async function runTelegramAction(action: TelegramPolicyAction, env: Env, payload: MailPolicyPayload, shareUrl: () => Promise<string>): Promise<PolicyActionResult> {
   try {
@@ -225,11 +226,12 @@ async function runTelegramAction(action: TelegramPolicyAction, env: Env, payload
     const message = trimTelegramMessage(renderTelegramTemplate(action.message, payload));
 
     await sendTelegramMessage(action, message, url);
-    const attachments = await sendTelegramAttachments(env, action, payload);
-    if (attachments.skipped > 0) {
-      const skippedMessage = `有 ${attachments.skipped} 个附件未发送，可能未启用 R2 或超过 Telegram 限制。`;
-      await sendTelegramMessage(action, escapeTelegramHtml(skippedMessage));
-    }
+    // 已注释：不启用 R2 附件存储
+    // const attachments = await sendTelegramAttachments(env, action, payload);
+    // if (attachments.skipped > 0) {
+    //   const skippedMessage = `有 ${attachments.skipped} 个附件未发送，可能未启用 R2 或超过 Telegram 限制。`;
+    //   await sendTelegramMessage(action, escapeTelegramHtml(skippedMessage));
+    // }
 
     return {
       id: action.id,
