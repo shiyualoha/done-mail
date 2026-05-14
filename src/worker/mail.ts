@@ -1,7 +1,8 @@
 import PostalMime from 'postal-mime';
 import { getSystemConfig } from './config';
 // import { fileContentDisposition } from './http/content-disposition'; // 已注释：不启用 R2
-import { buildBodyPreview, buildMailBodyChunks, buildMailContentSearchChunks, buildMailSearchFields } from './mail-content';
+import { logSystemEvent } from './http/logs';
+import { buildBodyPreview, buildMailBodyChunks, buildMailContentSearchChunks, buildMailSearchFields, normalizeReadableText, readableBodyText } from './mail-content';
 import { createMailShare, deleteMailShares } from './mail-share';
 import { runMailPolicies } from './policies';
 // import { deleteR2Objects, deleteR2ObjectsBestEffort } from './r2'; // 已注释：不启用 R2
@@ -51,6 +52,10 @@ const ORIGINAL_RECIPIENT_HEADER_KEYS = [
 ];
 const RECEIVED_HEADER_SCAN_LIMIT = 3;
 const emailPattern = /[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+/gi;
+const chineseVerificationKeywordPattern = /(验证码|校验码|动态码|动态密码|登录码|安全码|确认码)/;
+const verificationCodeTokenPattern = /[a-z0-9]{4,16}/i;
+const keywordBeforeCodePattern = /(验证码|校验码|动态码|动态密码|登录码|安全码|确认码)[^a-z0-9]{0,12}([a-z0-9]{4,16})/i;
+const codeBeforeKeywordPattern = /([a-z0-9]{4,16})[^a-z0-9]{0,8}(?:为|是)?[^a-z0-9]{0,8}(验证码|校验码|动态码|动态密码|登录码|安全码|确认码)/i;
 
 type HeaderIndex = Record<string, string[]>;
 
@@ -269,6 +274,30 @@ function attachmentRows(mailId: string, attachments: Array<Record<string, unknow
 
 function senderDisplay(name: string, address: string) {
   return name ? `${name} <${address}>` : address;
+}
+
+function isVerificationMail(input: { subject: string; preview: string; textBody: string; htmlBody: string }) {
+  const subject = normalizeReadableText(input.subject || '');
+  const preview = normalizeReadableText(input.preview || '');
+  const body = readableBodyText(input.textBody || '', input.htmlBody || '');
+  const combined = [subject, preview, body].filter(Boolean).join('\n');
+  if (!combined) return false;
+  if (keywordBeforeCodePattern.test(combined) || codeBeforeKeywordPattern.test(combined)) return true;
+  return chineseVerificationKeywordPattern.test(subject) && verificationCodeTokenPattern.test(`${preview}\n${body}`);
+}
+
+async function rejectNonVerificationMail(
+  env: Env,
+  message: ForwardableEmailMessage,
+  input: { fromAddr: string; toAddr: string; subject: string }
+) {
+  message.setReject('仅接收中文验证码邮件');
+  const target = input.toAddr || String(message.to || '').trim().toLowerCase() || '-';
+  const detail = [input.fromAddr && `发件人：${input.fromAddr}`, input.subject && `主题：${input.subject}`].filter(Boolean).join('；');
+  const reason = detail ? `已拒收非中文验证码邮件，${detail}` : '已拒收非中文验证码邮件';
+  await logSystemEvent(env, 'mail', target, 'receive', 'skipped', reason).catch((error) => {
+    console.error('记录邮件拒收日志失败', error);
+  });
 }
 
 async function managedDomainSet(env: Env, domains: string[]) {
@@ -508,6 +537,21 @@ export async function handleIncomingEmail(message: ForwardableEmailMessage, env:
     const attachments = (parsed.attachments || []) as Array<Record<string, unknown>>;
     const attachmentData = attachmentRows(mailId, attachments);
     const preview = buildBodyPreview(parsed.text || '', parsed.html || '');
+    if (
+      !isVerificationMail({
+        subject: parsed.subject || '',
+        preview,
+        textBody: parsed.text || '',
+        htmlBody: parsed.html || ''
+      })
+    ) {
+      await rejectNonVerificationMail(env, message, {
+        fromAddr,
+        toAddr: String(message.to || '').trim().toLowerCase(),
+        subject: parsed.subject || ''
+      });
+      return;
+    }
     const bodyChunks = buildMailBodyChunks(parsed.text || '', parsed.html || '');
     const contentSearchChunks = buildMailContentSearchChunks(parsed.text || '', parsed.html || '');
     const searchFields = buildMailSearchFields({

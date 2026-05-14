@@ -7,7 +7,7 @@ const pruneKvKey = 'system_logs:pruned_at';
 const pruneIntervalSeconds = 3600;
 
 export const systemLogModules = ['domain', 'policy', 'mail', 'send', 'system'] as const;
-export const systemLogActions = ['email_routing', 'dns', 'catch_all', 'setup', 'refresh', 'policy'] as const;
+export const systemLogActions = ['email_routing', 'dns', 'catch_all', 'setup', 'refresh', 'policy', 'receive'] as const;
 export const systemLogStatuses = ['success', 'failed', 'skipped'] as const;
 
 export type SystemLogModule = (typeof systemLogModules)[number];

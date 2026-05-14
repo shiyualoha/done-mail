@@ -99,9 +99,9 @@ function createDeleteEnv(options: { r2Fails?: boolean; batchFails?: boolean; del
 
 function rawMailWithAttachment() {
   return [
-    'From: Stripe <billing@stripe.example>',
+    'From: 验证中心 <notice@service.cn>',
     'To: pay@example.com',
-    'Subject: Invoice May',
+    'Subject: 登录验证码',
     'Message-ID: <msg-1@example.com>',
     'MIME-Version: 1.0',
     'Content-Type: multipart/mixed; boundary="mail-boundary"',
@@ -109,7 +109,7 @@ function rawMailWithAttachment() {
     '--mail-boundary',
     'Content-Type: text/plain; charset=utf-8',
     '',
-    'Your invoice is ready.',
+    '您的登录验证码为 123456，5 分钟内有效。',
     '--mail-boundary',
     'Content-Type: text/plain; name="invoice.txt"',
     'Content-Disposition: attachment; filename="invoice.txt"',
@@ -122,16 +122,80 @@ function rawMailWithAttachment() {
 }
 
 describe('incoming mail', () => {
-  it('未配置 R2 时仍保存邮件、正文、附件信息和搜索索引，附件标记为未存储', async () => {
+  it('中文验证码邮件会正常接收', async () => {
+    const { env } = createEnv();
+    const raw = [
+      'From: 验证中心 <notice@service.cn>',
+      'To: pay@example.com',
+      'Subject: 登录验证码',
+      'Message-ID: <msg-code@example.com>',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      '您的登录验证码为 123456，请在 5 分钟内完成验证。',
+      ''
+    ].join('\r\n');
+    const message = {
+      rawSize: raw.length,
+      raw: new TextEncoder().encode(raw),
+      headers: {
+        from: '验证中心 <notice@service.cn>',
+        to: 'pay@example.com',
+        subject: '登录验证码'
+      },
+      to: 'pay@example.com',
+      forward: vi.fn(),
+      setReject: vi.fn()
+    } as unknown as ForwardableEmailMessage;
+
+    await handleIncomingEmail(message, env);
+
+    expect(env.DB.batch).toHaveBeenCalledTimes(1);
+    expect(message.setReject).not.toHaveBeenCalled();
+  });
+
+  it('非验证码邮件会在收件阶段直接拒收并记录日志', async () => {
+    const { env, statements } = createEnv();
+    const raw = [
+      'From: 通知中心 <notice@service.cn>',
+      'To: pay@example.com',
+      'Subject: 账单通知',
+      'Message-ID: <msg-plain@example.com>',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      '您的账单已生成，请及时查看。',
+      ''
+    ].join('\r\n');
+    const message = {
+      rawSize: raw.length,
+      raw: new TextEncoder().encode(raw),
+      headers: {
+        from: '通知中心 <notice@service.cn>',
+        to: 'pay@example.com',
+        subject: '账单通知'
+      },
+      to: 'pay@example.com',
+      forward: vi.fn(),
+      setReject: vi.fn()
+    } as unknown as ForwardableEmailMessage;
+
+    await handleIncomingEmail(message, env);
+
+    expect(message.setReject).toHaveBeenCalledWith('仅接收中文验证码邮件');
+    expect(env.DB.batch).toHaveBeenCalledTimes(1);
+    expect(statements.some((item) => item.sql.includes('INSERT INTO mails ('))).toBe(false);
+    expect(statements.some((item) => item.sql.includes('INSERT INTO system_logs'))).toBe(true);
+  });
+
+  it('未配置 R2 时仍保存中文验证码邮件、正文、附件信息和搜索索引，附件标记为未存储', async () => {
     const { env, statements } = createEnv();
     const raw = rawMailWithAttachment();
     const message = {
       rawSize: raw.length,
       raw: new TextEncoder().encode(raw),
       headers: {
-        from: 'Stripe <billing@stripe.example>',
+        from: '验证中心 <notice@service.cn>',
         to: 'pay@example.com',
-        subject: 'Invoice May'
+        subject: '登录验证码'
       },
       to: 'pay@example.com',
       forward: vi.fn(),
@@ -144,10 +208,10 @@ describe('incoming mail', () => {
     expect(message.setReject).not.toHaveBeenCalled();
 
     const mailStatement = statements.find((item) => item.sql.includes('INSERT INTO mails ('));
-    expect(mailStatement?.params[2]).toBe('billing@stripe.example');
+    expect(mailStatement?.params[2]).toBe('notice@service.cn');
     expect(mailStatement?.params[4]).toBe('pay@example.com');
     expect(mailStatement?.params[5]).toBe('example.com');
-    expect(mailStatement?.params[8]).toBe('Invoice May');
+    expect(mailStatement?.params[8]).toBe('登录验证码');
     expect(mailStatement?.params[10]).toBe(1);
     expect(mailStatement?.params[11]).toBe(1);
 
@@ -155,7 +219,7 @@ describe('incoming mail', () => {
     expect(bodyStatement?.params[1]).toContain('from');
 
     const bodyChunkStatement = statements.find((item) => item.sql.includes('INSERT INTO mail_body_chunks') && item.params[1] === 'text');
-    expect(bodyChunkStatement?.params[3]).toContain('Your invoice is ready');
+    expect(bodyChunkStatement?.params[3]).toContain('您的登录验证码为 123456');
 
     const attachmentStatement = statements.find((item) => item.sql.includes('INSERT INTO mail_attachments'));
     expect(attachmentStatement?.params[2]).toBe('invoice.txt');
@@ -164,12 +228,106 @@ describe('incoming mail', () => {
 
     const ftsStatement = statements.find((item) => item.sql.includes('INSERT INTO mails_fts'));
     expect(ftsStatement?.sql).toContain('mail_id, subject, addresses');
-    expect(String(ftsStatement?.params[1])).toBe('invoice may');
-    expect(String(ftsStatement?.params[2])).toContain('billing@stripe.example');
+    expect(String(ftsStatement?.params[1])).toContain('登录验证码');
+    expect(String(ftsStatement?.params[2])).toContain('notice@service.cn');
 
     const contentFtsStatement = statements.find((item) => item.sql.includes('INSERT INTO mail_content_fts'));
-    expect(String(contentFtsStatement?.params[2])).toContain('your');
-    expect(String(contentFtsStatement?.params[2])).toContain('invoice');
+    expect(String(contentFtsStatement?.params[2])).toContain('123456');
+    expect(String(contentFtsStatement?.params[2])).toContain('登录');
+  });
+
+  it('仅有验证码关键词但没有验证码值时会拒收', async () => {
+    const { env, statements } = createEnv();
+    const raw = [
+      'From: 验证中心 <notice@service.cn>',
+      'To: pay@example.com',
+      'Subject: 登录验证码',
+      'Message-ID: <msg-keyword@example.com>',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      '本次登录需要短信验证码，请返回 App 查看。',
+      ''
+    ].join('\r\n');
+    const message = {
+      rawSize: raw.length,
+      raw: new TextEncoder().encode(raw),
+      headers: {
+        from: '验证中心 <notice@service.cn>',
+        to: 'pay@example.com',
+        subject: '登录验证码'
+      },
+      to: 'pay@example.com',
+      forward: vi.fn(),
+      setReject: vi.fn()
+    } as unknown as ForwardableEmailMessage;
+
+    await handleIncomingEmail(message, env);
+
+    expect(message.setReject).toHaveBeenCalledWith('仅接收中文验证码邮件');
+    expect(statements.some((item) => item.sql.includes('INSERT INTO mails ('))).toBe(false);
+  });
+
+  it('字母数字混合验证码邮件会正常接收', async () => {
+    const { env } = createEnv();
+    const raw = [
+      'From: 验证中心 <notice@service.cn>',
+      'To: pay@example.com',
+      'Subject: 邮箱确认码',
+      'Message-ID: <msg-mixed@example.com>',
+      'Content-Type: text/plain; charset=utf-8',
+      '',
+      '您的确认码为 u0JUzh，请在页面中输入完成验证。',
+      ''
+    ].join('\r\n');
+    const message = {
+      rawSize: raw.length,
+      raw: new TextEncoder().encode(raw),
+      headers: {
+        from: '验证中心 <notice@service.cn>',
+        to: 'pay@example.com',
+        subject: '邮箱确认码'
+      },
+      to: 'pay@example.com',
+      forward: vi.fn(),
+      setReject: vi.fn()
+    } as unknown as ForwardableEmailMessage;
+
+    await handleIncomingEmail(message, env);
+
+    expect(env.DB.batch).toHaveBeenCalledTimes(1);
+    expect(message.setReject).not.toHaveBeenCalled();
+  });
+
+  it('中文 HTML 验证码邮件也会正常接收', async () => {
+    const { env } = createEnv();
+    const raw = [
+      'From: 验证中心 <notice@service.cn>',
+      'To: pay@example.com',
+      'Subject: 安全验证',
+      'Message-ID: <msg-html@example.com>',
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=utf-8',
+      '',
+      '<html><body><p>您的安全验证码是 <b>654321</b>，请勿泄露给他人。</p></body></html>',
+      ''
+    ].join('\r\n');
+    const message = {
+      rawSize: raw.length,
+      raw: new TextEncoder().encode(raw),
+      headers: {
+        from: '验证中心 <notice@service.cn>',
+        to: 'pay@example.com',
+        subject: '安全验证'
+      },
+      to: 'pay@example.com',
+      forward: vi.fn(),
+      setReject: vi.fn()
+    } as unknown as ForwardableEmailMessage;
+
+    await handleIncomingEmail(message, env);
+
+    expect(env.DB.batch).toHaveBeenCalledTimes(1);
+    expect(message.setReject).not.toHaveBeenCalled();
   });
 
   // 已注释：不启用 R2 附件存储
