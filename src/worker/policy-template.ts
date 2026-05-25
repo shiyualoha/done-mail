@@ -29,6 +29,15 @@ export function renderTemplate(input: string, payload: MailPolicyPayload | MailP
   return input.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => values[key] ?? '');
 }
 
+export function renderJsonTemplate(input: string, payload: MailPolicyPayload | MailPolicyMatchPayload) {
+  const values = templateValues(payload);
+  return input.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_, key: string) => {
+    const value = values[key];
+    if (value === undefined || value === null) return '';
+    return JSON.stringify(value).slice(1, -1);
+  });
+}
+
 export function renderedKeyValues(rows: PolicyKeyValue[], payload: MailPolicyPayload | MailPolicyMatchPayload) {
   return rows.map((row) => ({
     key: renderTemplate(row.key, payload),

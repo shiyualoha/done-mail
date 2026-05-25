@@ -10,7 +10,7 @@ import type {
 import { extractDomain, safeJsonParse } from './utils';
 import { MAX_TELEGRAM_ATTACHMENTS, MAX_TELEGRAM_MESSAGE_LENGTH, TELEGRAM_MAX_FILE_SIZE } from './policy-constants';
 import { normalizeKeyValueList } from './policy-normalize';
-import { escapeTelegramHtml, renderedKeyValues, renderTelegramTemplate, renderTemplate } from './policy-template';
+import { escapeTelegramHtml, renderedKeyValues, renderJsonTemplate, renderTelegramTemplate, renderTemplate } from './policy-template';
 
 const TELEGRAM_TIMEOUT_MS = 8000;
 
@@ -48,7 +48,7 @@ function buildRequestBody(action: HttpRequestPolicyAction, payload: MailPolicyPa
   if (action.bodyType === 'none') return undefined;
   if (action.bodyType === 'text') return renderTemplate(action.body, payload);
   if (action.bodyType === 'json') {
-    const rendered = renderTemplate(action.body || '{}', payload);
+    const rendered = renderJsonTemplate(action.body || '{}', payload);
     JSON.parse(rendered);
     return rendered;
   }
