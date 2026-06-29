@@ -537,7 +537,9 @@ export async function handleIncomingEmail(message: ForwardableEmailMessage, env:
     const attachments = (parsed.attachments || []) as Array<Record<string, unknown>>;
     const attachmentData = attachmentRows(mailId, attachments);
     const preview = buildBodyPreview(parsed.text || '', parsed.html || '');
+    const fromDomain = extractDomain(fromAddr);
     if (
+      fromDomain !== 'mail.bytedance.net' &&
       !isVerificationMail({
         subject: parsed.subject || '',
         preview,
